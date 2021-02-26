@@ -15,7 +15,7 @@
  * therefore if we encounter an error as a permission issue, we must
  * print to perror as described in pa1.pdf
  * 
- * If file does not exist, then input is from stdin
+ * If file not given in command line arguments, then input is from stdin
  * 
  * directories and such related stuff as described in the pa1.pdf
 */
