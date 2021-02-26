@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
 				if (word_wrapper(file_input, 1, word_buffer, &delim)) {
 					err_flag = 1;
 				}
+				close(file_input)
 			}
 		} 
 		/** not even sure what kind of file this could be
@@ -82,6 +83,7 @@ int main(int argc, char *argv[]) {
 			err_flag = 1;
 		}
 	}
+	free(word_buffer);
 	if (err_flag) {
 		return EXIT_FAILURE;
 	} else {

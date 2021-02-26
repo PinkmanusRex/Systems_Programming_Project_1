@@ -7,6 +7,16 @@
 #include <stdlib.h>
 
 int word_wrapper(int file_input, int file_output, char *word_buffer, int width, regex_t *delim) {
+
+	int no_lines_yet = 1; //we've put absolutely no lines whatsoever yet
+
+	/** 
+	 * newline empties the buffer because it forms a complete word
+	 * if we encounter two or more newlines back to back, then we
+	 * know we will end up putting forth an entirely new paragraph
+	*/
+	int no_consec_newlines = 0;
+
 	int err_flag = 0;
 	
 	int word_buf_used = 0;
@@ -40,12 +50,31 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 			intermediate_buf[1] = '\0';
 			continue;
 		}
+		if (intermediate_buf[0]=='\n') {
+			no_consec_newlines += 1;
+		} else {
+			/** other whitespaces don't affect consec newlines */
+			if (regexec(delim, intermediate_buf, 0, NULL, 0)) {
+			/** if there are two or more 'consecutive' newlines between word characters */
+				if (no_consec_newlines >= 2 && !no_lines_yet) {
+					if (line_state == lEmpty) {
+						write(file_output, newline, 1);
+					} else {
+						write(file_output, newline, 1);
+						write(file_output, newline, 1);
+					}
+					line_used = 0;
+					line_state = lEmpty;
+				}
+				no_consec_newlines = 0;
+			}
+		}
 		/** 
 		 * regex for checking if a whitespace delimiter, which
 		 * either completes a word, or in the event of wEmpty,
 		 * is just ignored, leaving it in wEmpty state
 		*/
-		if (!regexec(&delim, intermediate_buf, 0, NULL, 0)) {
+		if (!regexec(delim, intermediate_buf, 0, NULL, 0)) {
 			if (word_buf_state == wEmpty) {
 				word_buf_state = wEmpty;
 			}
@@ -101,6 +130,7 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 			line_state = lEmpty;
 			word_buf_state = wEmpty;
 			line_used = 0;
+			no_lines_yet = 0; //got lines now
 		}
 		/** 
 		 * a complete word B which has length less than the maximum
@@ -130,6 +160,7 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 			write(file_output, word_buffer, word_buf_used);
 			word_buf_used = 0;
 			word_buf_state = wEmpty;
+			no_lines_yet = 0; //got lines now
 		}
 		/** 
 		 * wThreshold_Warn means that the word as discovered so far
@@ -149,6 +180,7 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 			line_state = lNonEmpty;
 			line_used = word_buf_used;
 			word_buf_used = 0;
+			no_lines_yet = 0; //got lines now
 		}
 		/** 
 		 * Have to dump the contents of the buffer when there
@@ -165,6 +197,7 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 				word_buf_used = 0;
 			}
 			err_flag = 1;
+			no_lines_yet = 0; //got lines now
 		}
 		/** 
 		 * Have completed the overly long word. Reset everything as
@@ -181,6 +214,7 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 			word_buf_used = 0;
 			word_buf_state = wEmpty;
 			err_flag = 1;
+			no_lines_yet = 0; //got lines now
 		}
 		bytesRead = read(file_input, intermediate_buf, 1);
 		intermediate_buf[1] = '\0';
