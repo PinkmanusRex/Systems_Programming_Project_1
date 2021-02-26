@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int word_wrapper(int file_input, int file_output, char *word_buffer, int width, regex_t delim) {
+int word_wrapper(int file_input, int file_output, char *word_buffer, int width, regex_t *delim) {
 	int err_flag = 0;
 	
 	int word_buf_used = 0;
