@@ -2,11 +2,11 @@
 #include "file_wrapper.h"
 #include <unistd.h>
 #include <fcntl.h>
-#include <regex.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-int word_wrapper(int file_input, int file_output, char *word_buffer, int width, regex_t *delim) {
+int word_wrapper(int file_input, int file_output, char *word_buffer, int width) {
 
 	/** 
 	 * newline empties the buffer because it forms a complete word
@@ -30,10 +30,9 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 	char newline[] = {'\n'};
 	char spaceChar[] = {' '};
 
-	char intermediate_buf[2];
+	char intermediate_buf[1];
 
 	int bytesRead = read(file_input, intermediate_buf, 1);
-	intermediate_buf[1] = '\0';
 
 	while (bytesRead > 0) {
 		/**
@@ -61,8 +60,8 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 				no_consec_newlines += 1;
 			}
 		} else if (no_consec_newlines > 0) {
-			/** whitespaces are ignored, word characters are the only things matter here */
-			if (regexec(delim, intermediate_buf, 0, NULL, 0)) {
+			/** whitespaces are ignored, word characters are the only things matter here. isspace() returns 0 for non-whitespace*/
+			if (!isspace(intermediate_buf[0])) {
 				if (paragraph_group_state == pNonEmpty && no_consec_newlines == 2) {
 					if (line_state == lEmpty) {
 						write(file_output, newline, 1);
@@ -77,11 +76,11 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 			}
 		}
 		/** 
-		 * regex for checking if a whitespace delimiter, which
+		 * isspace for checking if a whitespace delimiter, which
 		 * either completes a word, or in the event of wEmpty,
 		 * is just ignored, leaving it in wEmpty state
 		*/
-		if (!regexec(delim, intermediate_buf, 0, NULL, 0)) {
+		if (isspace(intermediate_buf[0])) {
 			if (word_buf_state == wEmpty) {
 				word_buf_state = wEmpty;
 			}
@@ -224,7 +223,6 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width, 
 			err_flag = 1;
 		}
 		bytesRead = read(file_input, intermediate_buf, 1);
-		intermediate_buf[1] = '\0';
 	}
 	/** 
 	 * None of the completed states would be here as they only

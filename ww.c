@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <regex.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -40,15 +40,10 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	/** create the regex for the whitespace delimiters */
-
-	regex_t delim;
-	regcomp(&delim, "[:space:]", 0);
-
 	int err_flag = 0;
 	/** argc==2 means that only the width was provided */
 	if (argc==2) {
-		if (word_wrapper(0, 1, word_buffer, &delim)) {
+		if (word_wrapper(0, 1, word_buffer, col_width)) {
 			err_flag = 1;
 		}
 	} else {
@@ -68,10 +63,10 @@ int main(int argc, char *argv[]) {
 				perror(argv[2]);
 				err_flag = 1;
 			} else {
-				if (word_wrapper(file_input, 1, word_buffer, &delim)) {
+				if (word_wrapper(file_input, 1, word_buffer, col_width)) {
 					err_flag = 1;
 				}
-				close(file_input)
+				close(file_input);
 			}
 		} 
 		/** not even sure what kind of file this could be
