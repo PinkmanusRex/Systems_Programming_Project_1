@@ -6,7 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int word_wrapper(int file_input, int file_output, char *word_buffer, int width) {
+int word_wrapper(int file_input, int file_output, char *word_buffer, int width)
+{
 
 	/** 
 	 * newline empties the buffer because it forms a complete word
@@ -16,10 +17,10 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 	int no_consec_newlines = 0;
 
 	int err_flag = 0;
-	
+
 	int word_buf_used = 0;
 	int word_buf_max = width;
-	
+
 	int line_used = 0;
 	int line_max = width;
 
@@ -30,12 +31,17 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 	char newline[] = {'\n'};
 	char spaceChar[] = {' '};
 
-	char intermediate_buf[1];
+	char intermediate_buf[10000];
 
-	int bytesRead = read(file_input, intermediate_buf, 1);
+	int bytesRead = read(file_input, intermediate_buf, 10000);
 
-	while (bytesRead > 0) {
-		/**
+	while (bytesRead > 0)
+	{
+
+		int buf_read = 0;
+		while (buf_read < bytesRead)
+		{
+			/**
 		 * a null terminator might or might not be considered
 		 * a whitespace character. It does not show up as a
 		 * visible whitespace character, and it is not a word
@@ -43,59 +49,73 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 		 * such clarification, but for now just ignore null
 		 * terminators
 		*/
-		if (intermediate_buf[0]=='\0') {
-			bytesRead = read(file_input, intermediate_buf, 1);
-			intermediate_buf[1] = '\0';
-			continue;
-		}
-		/**
+			if (intermediate_buf[buf_read] == '\0')
+			{
+				buf_read += 1;
+				continue;
+			}
+			/**
 		 * if there are at least two newlines between a word character and a non-empty 
 		 * paragraph group, then the word discovered is part of a different paragraph
 		 * group.
 		 * 
 		 * our different paragraph groups are separated by two newlines
 		*/
-		if (intermediate_buf[0]=='\n') {
-			if (no_consec_newlines < 2) { //we really don't need to count beyond 2. Mainly protects against absurd amounts of newlines
-				no_consec_newlines += 1;
-			}
-		} else if (no_consec_newlines > 0) {
-			/** whitespaces are ignored, word characters are the only things matter here. isspace() returns 0 for non-whitespace*/
-			if (!isspace(intermediate_buf[0])) {
-				if (paragraph_group_state == pNonEmpty && no_consec_newlines == 2) {
-					if (line_state == lEmpty) {
-						write(file_output, newline, 1);
-					} else {
-						write(file_output, newline, 1);
-						write(file_output, newline, 1);
-					}
-					/** transition to the new paragrah group, which is currently empty */
-					paragraph_group_state = pEmpty;
-					line_state = lEmpty;
+			if (intermediate_buf[buf_read] == '\n')
+			{
+				if (no_consec_newlines < 2)
+				{ //we really don't need to count beyond 2. Mainly protects against absurd amounts of newlines
+					no_consec_newlines += 1;
 				}
-				no_consec_newlines = 0;
 			}
-		}
-		/** 
+			else if (no_consec_newlines > 0)
+			{
+				/** whitespaces are ignored, word characters are the only things matter here. isspace() returns 0 for non-whitespace*/
+				if (!isspace(intermediate_buf[buf_read]))
+				{
+					if (paragraph_group_state == pNonEmpty && no_consec_newlines == 2)
+					{
+						if (line_state == lEmpty)
+						{
+							write(file_output, newline, 1);
+						}
+						else
+						{
+							write(file_output, newline, 1);
+							write(file_output, newline, 1);
+						}
+						/** transition to the new paragrah group, which is currently empty */
+						paragraph_group_state = pEmpty;
+						line_state = lEmpty;
+					}
+					no_consec_newlines = 0;
+				}
+			}
+			/** 
 		 * isspace for checking if a whitespace delimiter, which
 		 * either completes a word, or in the event of wEmpty,
 		 * is just ignored, leaving it in wEmpty state
 		*/
-		if (isspace(intermediate_buf[0])) {
-			if (word_buf_state == wEmpty) {
-				word_buf_state = wEmpty;
+			if (isspace(intermediate_buf[buf_read]))
+			{
+				if (word_buf_state == wEmpty)
+				{
+					word_buf_state = wEmpty;
+				}
+				else if (word_buf_state == wIncomplete)
+				{
+					word_buf_state = wComplete;
+				}
+				else if (word_buf_state == wThreshold_Warn)
+				{
+					word_buf_state = wThreshold_Warn_Complete;
+				}
+				else if (word_buf_state == wThreshold_Exceed)
+				{
+					word_buf_state = wThreshold_Exceed_Complete;
+				}
 			}
-			else if (word_buf_state == wIncomplete) {
-				word_buf_state = wComplete;
-			}
-			else if (word_buf_state == wThreshold_Warn) {
-				word_buf_state = wThreshold_Warn_Complete;
-			}
-			else if (word_buf_state == wThreshold_Exceed) {
-				word_buf_state = wThreshold_Exceed_Complete;
-			}
-		}
-		/** 
+			/** 
 		 * Word character encountered. wEmpty becomes wIncomplete
 		 * In the case of width 1, wEmpty -> wIncomplete immediately
 		 * to wIncomplete -> wThreshold_Warn. 
@@ -109,37 +129,43 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 		 * is now beyond the acceptable line width. 
 		 * So we have exceeded the threshold.
 		*/
-		else {
-			word_buffer[word_buf_used] = intermediate_buf[0];
-			word_buf_used += 1;
-			if (word_buf_state == wEmpty) {
-				word_buf_state = wIncomplete;
+			else
+			{
+				word_buffer[word_buf_used] = intermediate_buf[buf_read];
+				word_buf_used += 1;
+				if (word_buf_state == wEmpty)
+				{
+					word_buf_state = wIncomplete;
+				}
+				if (word_buf_state == wIncomplete && word_buf_used == word_buf_max)
+				{
+					word_buf_state = wThreshold_Warn;
+				}
+				else if (word_buf_state == wThreshold_Warn)
+				{
+					word_buf_state = wThreshold_Exceed;
+				}
+				else if (word_buf_state == wThreshold_Exceed)
+				{
+					word_buf_state = wThreshold_Exceed;
+				}
 			}
-			if (word_buf_state == wIncomplete && word_buf_used == word_buf_max) {
-				word_buf_state = wThreshold_Warn;
-			}
-			else if (word_buf_state == wThreshold_Warn) {
-				word_buf_state = wThreshold_Exceed;
-			}
-			else if (word_buf_state == wThreshold_Exceed) {
-				word_buf_state = wThreshold_Exceed;
-			}
-		}
-		/** 
+			/** 
 		 * wThreshold_Warn_Complete:
 		 *		comes only immediately from a wThreshold_Warn,
 		 * 		therefore the buffer is currently empty. Need
 		 * 		only to create a new line and reset all line
 		 * 		and word states
 		*/
-		if (word_buf_state == wThreshold_Warn_Complete) {
-			write(file_output, newline, 1);
-			line_state = lEmpty;
-			word_buf_state = wEmpty;
-			line_used = 0;
-			paragraph_group_state = pNonEmpty;
-		}
-		/** 
+			if (word_buf_state == wThreshold_Warn_Complete)
+			{
+				write(file_output, newline, 1);
+				line_state = lEmpty;
+				word_buf_state = wEmpty;
+				line_used = 0;
+				paragraph_group_state = pNonEmpty;
+			}
+			/** 
 		 * a complete word B which has length less than the maximum
 		 * acceptable width of a line. But just because the word
 		 * length is within the max width of a line does not mean
@@ -151,45 +177,55 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 		 * exceed the width of the line? If so, must go as the first
 		 * word of a new line
 		*/
-		else if (word_buf_state == wComplete) {
-			if (line_state == lEmpty) {
-				line_state = lNonEmpty;
-				line_used = word_buf_used;
-			} else {
-				if (line_used + 1 + word_buf_used <= line_max) {
-					write(file_output, spaceChar, 1);
-					line_used += 1 + word_buf_used;
-				} else {
-					write(file_output, newline, 1);
+			else if (word_buf_state == wComplete)
+			{
+				if (line_state == lEmpty)
+				{
+					line_state = lNonEmpty;
 					line_used = word_buf_used;
 				}
+				else
+				{
+					if (line_used + 1 + word_buf_used <= line_max)
+					{
+						write(file_output, spaceChar, 1);
+						line_used += 1 + word_buf_used;
+					}
+					else
+					{
+						write(file_output, newline, 1);
+						line_used = word_buf_used;
+					}
+				}
+				write(file_output, word_buffer, word_buf_used);
+				word_buf_used = 0;
+				word_buf_state = wEmpty;
+				paragraph_group_state = pNonEmpty;
 			}
-			write(file_output, word_buffer, word_buf_used);
-			word_buf_used = 0;
-			word_buf_state = wEmpty;
-			paragraph_group_state = pNonEmpty;
-		}
-		/** 
+			/** 
 		 * wThreshold_Warn means that the word as discovered so far
 		 * takes up the maximal width of a line, so it must occupy
 		 * an entire line. If the current line is lEmpty, it already
 		 * has an entire line available all to itself. Else it must
 		 * get a new line. 
 		*/
-		else if (word_buf_state == wThreshold_Warn) {
-			if (line_state == lEmpty) {
-				write(file_output, word_buffer, word_buf_used);
+			else if (word_buf_state == wThreshold_Warn)
+			{
+				if (line_state == lEmpty)
+				{
+					write(file_output, word_buffer, word_buf_used);
+				}
+				else if (line_state == lNonEmpty)
+				{
+					write(file_output, newline, 1);
+					write(file_output, word_buffer, word_buf_used);
+				}
+				line_state = lNonEmpty;
+				line_used = word_buf_used;
+				word_buf_used = 0;
+				paragraph_group_state = pNonEmpty;
 			}
-			else if (line_state == lNonEmpty) {
-				write(file_output, newline, 1);
-				write(file_output, word_buffer, word_buf_used);
-			}
-			line_state = lNonEmpty;
-			line_used = word_buf_used;
-			word_buf_used = 0;
-			paragraph_group_state = pNonEmpty;
-		}
-		/** 
+			/** 
 		 * Have to dump the contents of the buffer when there
 		 * is no more space. Follows from wThreshold_Warn or
 		 * wThreshold_Exceed. By the production rules for this
@@ -197,33 +233,40 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 		 * no need to occupy its own line since it must be appended
 		 * to the current word of the current line
 		*/
-		else if (word_buf_state == wThreshold_Exceed) {
-			if (word_buf_used == word_buf_max) {
-				write(file_output, word_buffer, word_buf_used);
-				line_used += word_buf_used;
-				word_buf_used = 0;
-				paragraph_group_state = pNonEmpty;
+			else if (word_buf_state == wThreshold_Exceed)
+			{
+				if (word_buf_used == word_buf_max)
+				{
+					write(file_output, word_buffer, word_buf_used);
+					line_used += word_buf_used;
+					word_buf_used = 0;
+					paragraph_group_state = pNonEmpty;
+				}
+				err_flag = 1;
 			}
-			err_flag = 1;
-		}
-		/** 
+			/** 
 		 * Have completed the overly long word. Reset everything as
 		 * in a normal length completed word, but keep track of the
 		 * error situation
 		*/
-		else if (word_buf_state == wThreshold_Exceed_Complete) {
-			if (word_buf_used > 0) {
-				write(file_output, word_buffer, word_buf_used);
+			else if (word_buf_state == wThreshold_Exceed_Complete)
+			{
+				if (word_buf_used > 0)
+				{
+					write(file_output, word_buffer, word_buf_used);
+				}
+				write(file_output, newline, 1);
+				line_used = 0;
+				line_state = lEmpty;
+				word_buf_used = 0;
+				word_buf_state = wEmpty;
+				paragraph_group_state = pNonEmpty;
+				err_flag = 1;
 			}
-			write(file_output, newline, 1);
-			line_used = 0;
-			line_state = lEmpty;
-			word_buf_used = 0;
-			word_buf_state = wEmpty;
-			paragraph_group_state = pNonEmpty;
-			err_flag = 1;
+			buf_read += 1;
 		}
-		bytesRead = read(file_input, intermediate_buf, 1);
+		bytesRead = read(file_input, intermediate_buf, 10000);
+		buf_read = 0;
 	}
 	/** 
 	 * None of the completed states would be here as they only
@@ -234,17 +277,24 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 	 * wIncomplete, which must be treated in the same manner
 	 * as encountering a wComplete
 	*/
-	if (word_buf_used > 0) {
-		if (word_buf_state == wThreshold_Exceed) {
+	if (word_buf_used > 0)
+	{
+		if (word_buf_state == wThreshold_Exceed)
+		{
 			write(file_output, word_buffer, word_buf_used);
 			write(file_output, newline, 1);
 			err_flag = 1;
 		}
-		else {
-			if (line_state == lNonEmpty) {
-				if (line_used + 1 + word_buf_used <= line_max) {
+		else
+		{
+			if (line_state == lNonEmpty)
+			{
+				if (line_used + 1 + word_buf_used <= line_max)
+				{
 					write(file_output, spaceChar, 1);
-				} else {
+				}
+				else
+				{
 					write(file_output, newline, 1);
 				}
 			}
@@ -258,15 +308,19 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 	 * have been set prior to this statement, so no use checking for
 	 * the wThreshold_Exceed situation here. 
 	*/
-	else {
-		if (line_state == lNonEmpty) {
+	else
+	{
+		if (line_state == lNonEmpty)
+		{
 			write(file_output, newline, 1);
 		}
 	}
-	if (err_flag) {
+	if (err_flag)
+	{
 		return 1;
 	}
-	else {
+	else
+	{
 		return 0;
 	}
 }
