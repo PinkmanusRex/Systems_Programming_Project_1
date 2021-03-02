@@ -5,7 +5,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <string.h>
 #include "file_wrapper.h"
+
+#define DT_REG 8
 
 /** 
  * File that runs word_wrapper.
@@ -55,8 +60,64 @@ int main(int argc, char *argv[]) {
 		}
 		/** more research on handling directories necessary */
 		else if (S_ISDIR(data.st_mode)) {
+			DIR *dirp = opendir(argv[2]);
+			if (!dirp) {
+				perror(argv[2]);
+				return EXIT_FAILURE;
+			}
+			struct dirent *de;
+			while ((de = readdir(dirp))) {
+				if (de->d_type == DT_REG) {
+					/** cannot begin with . or wrap. */
+					if (de->d_reclen > 0) {
+						char can_read = 1;
+						if (de->d_name[0] == '.') {
+							can_read = 0;
+						}
+						if (de->d_reclen >= 5) {
+							if (de->d_name[0]=='w' && de->d_name[1] == 'r' && de->d_name[2] == 'a' && de->d_name[3] == 'p' && de->d_name[4] == '.') {
+								can_read = 0;
+							}
+						}
+						if (can_read) {
+							/** ./<dir_name>/wrap.<file_name> */
+							int out_name_len = 1 + 1 + strlen(argv[2]) + 1 + 5 + de->d_reclen + 1;
+							int in_name_len = out_name_len - 5;
+							char *out_name = malloc(sizeof(char)*out_name_len);
+							char *in_name = malloc(sizeof(char)*in_name_len);
+							out_name[0] = '\0';
+							in_name[0] = '\0';
+							strcat(in_name, "./");
+							strcat(in_name, argv[2]);
+							strcat(in_name, "/");
+							strcat(out_name, in_name);
+							strcat(out_name, "wrap.");
+							strcat(out_name, de->d_name);
+							strcat(in_name, de->d_name);
+							int file_input = open(in_name, O_RDONLY);
+							if (file_input == -1) {
+								perror(in_name);
+								err_flag = 1;
+							} else {
+								int file_output = open(out_name, O_WRONLY|O_TRUNC|O_CREAT, S_IRWXU);
+								if (file_output == -1) {
+									perror(out_name);
+									err_flag = 1;
+								} else {
+									if (word_wrapper(file_input, file_output, word_buffer, col_width)) {
+										err_flag = 1;
+									}
+								}
+							}
+							free(out_name);
+							free(in_name);
+						}
+					}
+				}
+			}
+			closedir(dirp);
 
-		} 
+		}
 		else if (S_ISREG(data.st_mode)) {
 			int file_input = open(argv[2], O_RDONLY);
 			if (file_input == -1) {
