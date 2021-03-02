@@ -69,25 +69,25 @@ int main(int argc, char *argv[]) {
 			while ((de = readdir(dirp))) {
 				if (de->d_type == DT_REG) {
 					/** cannot begin with . or wrap. */
-					if (de->d_reclen > 0) {
+					int filename_len = strlen(de->d_name);
+					if (filename_len > 0) {
 						char can_read = 1;
 						if (de->d_name[0] == '.') {
 							can_read = 0;
 						}
-						if (de->d_reclen >= 5) {
+						if (filename_len >= 5) {
 							if (de->d_name[0]=='w' && de->d_name[1] == 'r' && de->d_name[2] == 'a' && de->d_name[3] == 'p' && de->d_name[4] == '.') {
 								can_read = 0;
 							}
 						}
 						if (can_read) {
-							/** ./<dir_name>/wrap.<file_name> */
-							int out_name_len = 1 + 1 + strlen(argv[2]) + 1 + 5 + de->d_reclen + 1;
+							/** <dir_name/dir_path>/wrap.<file_name> */
+							int out_name_len = strlen(argv[2]) + 1 + 5 + filename_len + 1;
 							int in_name_len = out_name_len - 5;
 							char *out_name = malloc(sizeof(char)*out_name_len);
 							char *in_name = malloc(sizeof(char)*in_name_len);
 							out_name[0] = '\0';
 							in_name[0] = '\0';
-							strcat(in_name, "./");
 							strcat(in_name, argv[2]);
 							strcat(in_name, "/");
 							strcat(out_name, in_name);
