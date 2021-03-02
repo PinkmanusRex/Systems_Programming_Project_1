@@ -71,6 +71,7 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width) 
 					}
 					/** transition to the new paragrah group, which is currently empty */
 					paragraph_group_state = pEmpty;
+					line_state = lEmpty;
 				}
 				no_consec_newlines = 0;
 			}

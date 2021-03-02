@@ -1,0 +1,11 @@
+foo foo foofoofoo   fooo
+	foofoofoo
+
+	foo
+
+	foo foo foo
+
+	foofoo   fooofofofo
+	     foo
+
+	 fooo

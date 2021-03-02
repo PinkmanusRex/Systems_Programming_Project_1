@@ -1,0 +1,15 @@
+In general,      word boundaries will not coincide with the ends of the buffer. Make sure you canhandle receiving 
+		a word split between the data returned by consecutive 				
+				calls to read(). 
+
+
+
+
+
+
+
+
+In particular,make sure you can handle a word that is too big to fit in your buffer.You may use any of the C or Posix standard libraries available on the iLab machines. 
+
+
+You mayuse code originally written by you or your partner for other assignments in this class. Youmay notinclude or copy code from other students or found on-line.
