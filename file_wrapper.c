@@ -16,8 +16,10 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width)
 	*/
 	int no_consec_newlines = 0;
 
+	/** Set error flag */
 	int err_flag = 0;
 
+	/** Buffer used for wrapping (how long each line can be at max) */
 	int word_buf_used = 0;
 	int word_buf_max = width;
 
@@ -31,10 +33,13 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width)
 	char newline[] = {'\n'};
 	char spaceChar[] = {' '};
 
+	/** Buffer to read in chunks of the file. */
 	char intermediate_buf[10000];
 
+	/** Read in a max 10,000 bytes at a time. This is done to prevent the program from freaking out over reading too large of a file in one go. */
 	int bytesRead = read(file_input, intermediate_buf, 10000);
 
+	/** Loop continually reads in chunks of the file for as long as there are chunks to be read. */
 	while (bytesRead > 0)
 	{
 
@@ -75,6 +80,7 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width)
 				{
 					if (paragraph_group_state == pNonEmpty && no_consec_newlines == 2)
 					{
+					    /** Write paragraph here */
 						if (line_state == lEmpty)
 						{
 							write(file_output, newline, 1);
@@ -315,6 +321,7 @@ int word_wrapper(int file_input, int file_output, char *word_buffer, int width)
 			write(file_output, newline, 1);
 		}
 	}
+	/** Final failiure check and status return */
 	if (err_flag)
 	{
 		return 1;

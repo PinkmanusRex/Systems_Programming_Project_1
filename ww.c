@@ -38,8 +38,7 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	/** creates the buffer */
-
+	/** Creates the buffer. Buffer is the size of the declared column width. The idea is to read in col_width sized chunks to word wrap nicely before a newline. */
 	char *word_buffer = malloc(sizeof(char)*col_width);
 	if (!word_buffer) {
 		return EXIT_FAILURE;
@@ -48,6 +47,7 @@ int main(int argc, char *argv[]) {
 	int err_flag = 0;
 	/** argc==2 means that only the width was provided */
 	if (argc==2) {
+	    /** Call the word wrapper and display output to standard output. No directory processing necessary. */
 		if (word_wrapper(0, 1, word_buffer, col_width)) {
 			err_flag = 1;
 		}
@@ -61,6 +61,7 @@ int main(int argc, char *argv[]) {
 		/** more research on handling directories necessary */
 		else if (S_ISDIR(data.st_mode)) {
 			DIR *dirp = opendir(argv[2]);
+			/** Failiure condition if directory cannot be opened. */
 			if (!dirp) {
 				perror(argv[2]);
 				return EXIT_FAILURE;
@@ -68,13 +69,15 @@ int main(int argc, char *argv[]) {
 			struct dirent *de;
 			while ((de = readdir(dirp))) {
 				if (de->d_type == DT_REG) {
-					/** cannot begin with . or wrap. */
+					/** cannot begin with "." or "wrap.". This solved the issue of coming across already wrapped files and improperly named files. */
 					int filename_len = strlen(de->d_name);
 					if (filename_len > 0) {
 						char can_read = 1;
+						/** check file name to not start with a period */
 						if (de->d_name[0] == '.') {
 							can_read = 0;
 						}
+						/** check file name to not start with "wrap" */
 						if (filename_len >= 5) {
 							if (de->d_name[0]=='w' && de->d_name[1] == 'r' && de->d_name[2] == 'a' && de->d_name[3] == 'p' && de->d_name[4] == '.') {
 								can_read = 0;
@@ -95,15 +98,18 @@ int main(int argc, char *argv[]) {
 							strcat(out_name, de->d_name);
 							strcat(in_name, de->d_name);
 							int file_input = open(in_name, O_RDONLY);
+							/** Failiure condition if file within directory path cannot be read. */
 							if (file_input == -1) {
 								perror(in_name);
 								err_flag = 1;
 							} else {
 								int file_output = open(out_name, O_WRONLY|O_TRUNC|O_CREAT, S_IRWXU);
+								/** Failiure condition for if output file cannot be created. */
 								if (file_output == -1) {
 									perror(out_name);
 									err_flag = 1;
 								} else {
+								    /** Function call for wrapper code. Returns error flag 1 if something goes wrong. */
 									if (word_wrapper(file_input, file_output, word_buffer, col_width)) {
 										err_flag = 1;
 									}
@@ -118,12 +124,15 @@ int main(int argc, char *argv[]) {
 			closedir(dirp);
 
 		}
+		/** Checks if st_mode is a regular file. */
 		else if (S_ISREG(data.st_mode)) {
 			int file_input = open(argv[2], O_RDONLY);
+			/** Failiure condition for opening file as read only. */
 			if (file_input == -1) {
 				perror(argv[2]);
 				err_flag = 1;
 			} else {
+			    /** Word wrap with only read access to the file. */
 				if (word_wrapper(file_input, 1, word_buffer, col_width)) {
 					err_flag = 1;
 				}
@@ -140,6 +149,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	free(word_buffer);
+	/** Final error check of the entire program. */
 	if (err_flag) {
 		return EXIT_FAILURE;
 	} else {
