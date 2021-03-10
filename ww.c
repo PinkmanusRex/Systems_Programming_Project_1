@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 								perror(in_name);
 								err_flag = 1;
 							} else {
-								int file_output = open(out_name, O_WRONLY|O_TRUNC|O_CREAT, S_IRWXU);
+								int file_output = open(out_name, O_WRONLY|O_TRUNC|O_CREAT, 0600);
 								/** Failiure condition for if output file cannot be created. */
 								if (file_output == -1) {
 									perror(out_name);
