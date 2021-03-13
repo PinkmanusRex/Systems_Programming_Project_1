@@ -2,7 +2,7 @@
 
 Name: Michael Zhang&emsp;&emsp;&emsp;&emsp;NetID: mz487
 
-Name: Cyrus Majd&emsp;&emsp;&emsp;&emsp;NetID: cm1355
+Name: Cyrus Majd&emsp;&emsp;&emsp;&emsp;&emsp;NetID: cm1355
  
 ### Description:
 A word wrapping program meant to reformat a text file into a more easily digestible format, wrapping based upon a user inputted width and eliminating excess whitespace.
