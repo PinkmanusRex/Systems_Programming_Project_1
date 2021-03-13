@@ -12,19 +12,19 @@ A word wrapping program meant to reformat a text file into a more easily digesti
 ### Usage:
  - Will wrap FILE_NAME within WIDTH amount, printing results to STDOUT
     ```sh
-    ./ww WIDTH FILE_NAME
+    $./ww WIDTH FILE_NAME
     ```
  - Will wrap all files in a DIRECTORY  according to WIDTH, outputting to wrap.file_name for every file_name in DIRECTORY
     ```sh
-    ./ww WIDTH DIRECTORY
+    $./ww WIDTH DIRECTORY
     ```
  - Will read in from STDIN and print to STDOUT, according to WIDTH
     ```sh
-    ./ww WIDTH
+    $./ww WIDTH
     ```
  - Note: It is recommended that if you so wish to read from STDIN, that you use piping and redirection to achieve so. Example:
     ```sh
-    cat FILE_NAME | ./ww WIDTH
+    $cat FILE_NAME | ./ww WIDTH
     ```
 ### Testing Strategy:
 Initially, the program was tested to check for syntax, memory leaks, and compilation errors. Upon confirming a lack of such issues, these cases were tested for:
