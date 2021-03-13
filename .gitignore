@@ -1,1 +1,5 @@
 no_permission.txt
+*.txt
+testdir1/
+.DS_Store
+._README.md
