@@ -35,7 +35,7 @@ Initially, the program was tested to check for syntax, memory leaks, and compila
 2) Does the program print as expected given multiple newlines, thus establishing new paragraphs, but not printing excessive amounts of space between paragraphs?\
 &emsp;&emsp;Yes, it did. Only a singular empty line was printed between any two paragraphs.
 
-3) Can the program handle not only directories that are scoped to ./, but also in other locations, such as directories above it?\
+3) Can the program handle not only directories that are scoped to ```./```, but also in other locations, such as directories above it?\
 &emsp;&emsp;Yes, the program was able to handle other directory paths, both relative and absolute.
 
 4) Does the program behave as expected when encountering files that don't exist? That is, if the file inputted into the command line does not exist, does it ```perror``` and return ```EXIT_FAILURE```?\
