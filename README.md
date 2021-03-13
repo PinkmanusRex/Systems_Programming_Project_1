@@ -39,7 +39,7 @@ Initially, the program was tested to check for syntax, memory leaks, and compila
 &emsp;&emsp;Yes, the program was able to handle other directory paths, both relative and absolute.
 
 4) Does the program behave as expected when encountering files that don't exist? That is, if the file inputted into the command line does not exist, does it ```perror``` and return ```EXIT_FAILURE```?\
-&emsp;&emsp;It did indeed perror, and it did returned ```EXIT_FAILURE``` as confirmed using ```echo $?```.
+&emsp;&emsp;It did indeed ```perror```, and it did return ```EXIT_FAILURE``` as confirmed using ```echo $?```.
 
 5) Does a similar behavior as described in the situation with a file that does not exist occur for a file which does not have read permission?\
 &emsp;&emsp;Indeed, it did. Confirmed by the ```perror``` results as well as ```echo $?```.
